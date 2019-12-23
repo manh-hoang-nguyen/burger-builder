@@ -1,10 +1,12 @@
 import React, { Component } from "react";
+import {connect} from 'react-redux'
 
 import Button from "../../../components/UI/Button/Button";
 import classes from "./ContactData.module.css";
 import axios from "../../../axios-orders";
 import Spinner from "../../../components/UI/Spinner/Spinner";
 import Input from "../../../components/UI/Input/Input";
+import * as actionTypes from '../../../store/actions/actionTypes'
 export class ContactData extends Component {
   state = {
     //We can creat a helper method for clean code
@@ -116,7 +118,7 @@ export class ContactData extends Component {
     }
 
     const order = {
-      ingredients: this.props.ingredients,
+      ingredients: this.props.ings,
       price: this.props.price,
       orderData: formData
     };
@@ -160,7 +162,7 @@ export class ContactData extends Component {
         
       }
     }
-    console.log(formIsValid)
+     
     this.setState({orderForm: updatedOrderForm, formIsValid: formIsValid})
   }
 
@@ -212,5 +214,36 @@ export class ContactData extends Component {
     );
   }
 }
-
-export default ContactData;
+const mapStateToProps = state =>{
+  return{
+    ings: state.ingredients,
+    price: state.totalPrice
+  }
+}
+const mapDispatchToProps = dispatch =>{
+  return {
+    order:()=>{
+      const formData ={};
+      for (const formElementIdentifier in this.state.orderForm) {
+        if (this.state.orderForm.hasOwnProperty(formElementIdentifier)) {
+            formData[formElementIdentifier] = this.state.orderForm[formElementIdentifier].value;
+          
+        }
+      }
+      const order = {
+        ingredients: this.props.ings,
+        price: this.props.price,
+        orderData: formData
+      };
+      axios
+        .post("/orders.json", order)
+        .then(res => {
+          this.setState({ loading: false, purchasing: false });
+          this.props.history.push("/");
+          dispatch({type:actionTypes.ORDER_SUCCESS})
+        })
+        .catch(err => this.setState({ loading: false })); 
+    }
+  }
+}
+export default connect(mapStateToProps)(ContactData) ;
